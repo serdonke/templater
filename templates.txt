@@ -1,0 +1,10 @@
+To,
+{name} (roll no. {rollno})
+Student of BS-ES course, IIT Madras
+
+Dear {name},
+
+You scored {marks} marks in the exam, and your grade is {grade}.
+
+Sincerely,
+The Dean
