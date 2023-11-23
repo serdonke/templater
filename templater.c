@@ -184,7 +184,7 @@ void write_file(Student student)
                 template_string = replace_substr(template_string, g_str_templates[i], student.rollno);
                 break;
             // NOTE:(donke) TIL C's grammar does not allow for 
-            // declarations after case...
+            // declarations after labels...
             // so I need an empty statement
             case 2: ;
                 char* marks = calloc(4, sizeof(char));
@@ -209,6 +209,7 @@ void write_file(Student student)
     if (outfile == NULL)
     {
         fprintf(stderr, "Failed to open the output file");
+        free(template_string);
         fclose(template);
         exit(2);
     }
