@@ -11,7 +11,7 @@ int main(void)
 
     for (size_t i = 0; i < sizeof(students); i++)
     {
-        /*NOTE:(donke) This is weird and necessary becauase
+        /* NOTE:(donke) This is weird and necessary becauase
         // we do not have a custom allocator...
         // resizing with realloc gives me a min of 8
         // on my Windows based machine
@@ -66,6 +66,7 @@ Student* read_csv(const char* filename)
                 filename);
         free(student_data);
         fclose(csvfile);
+        return NULL;
     }
     
     size_t count = 0;
@@ -76,6 +77,8 @@ Student* read_csv(const char* filename)
             fprintf(stderr, 
                     "Error enountered while parsing CSV file %s\n",
                     filename);
+            free(student_data);
+            free(students);
             fclose(csvfile);
             return NULL;
         }
@@ -85,8 +88,6 @@ Student* read_csv(const char* filename)
         char* name  = strtok(row, ",");
         char* roll  = strtok(NULL, ",");
         char* marks = strtok(NULL, ",");
-
-        // printf("%s\n%s\n%s\n", name, roll, marks);
 
         strncpy(students[count].name, name, NAMESIZE - 1);
         students[count].name[NAMESIZE - 1] = '\0';
@@ -100,8 +101,8 @@ Student* read_csv(const char* filename)
         count++;
     }
 
-    students = realloc(students, count * sizeof(Student));
-    if (students == NULL)
+    Student* resized_students = realloc(students, count * sizeof(Student));
+    if (resized_students == NULL)
     {
         printf("(Warning) Failed to resize internal student array\n");
         printf("(Warning) This array will probably have garbage content\n");
@@ -113,13 +114,13 @@ Student* read_csv(const char* filename)
     
     free(student_data);
     fclose(csvfile);
-    /*NOTE:(donke) Freeing students array gives some unexpected behaviour
+    /* NOTE:(donke) Freeing students array gives some unexpected behaviour
     // Since in testing the size was 3 and I am allocating 512
     // realloc just frees excess but the pointer remains same 
     // and freeing it gives unexpected behaviour since students
     // and resized both point to the same memory location
     */
-    return students;
+    return resized_students;
 }
 
 char compute_grade(Student student)
@@ -182,8 +183,9 @@ void write_file(Student student)
             case 1:
                 template_string = replace_substr(template_string, g_str_templates[i], student.rollno);
                 break;
-            //NOTE:(donke) TIL C's grammar does not allow for this...lmao
-            // sos I need an empty statement
+            // NOTE:(donke) TIL C's grammar does not allow for 
+            // declarations after case...
+            // so I need an empty statement
             case 2: ;
                 char* marks = calloc(4, sizeof(char));
                 sprintf(marks, "%d", student.marks);
@@ -200,7 +202,6 @@ void write_file(Student student)
                 break;
         }
     }
-    // printf("%s\n", template_string);
 
     char outputfilename[32];
     sprintf(outputfilename, "output/%s.txt", student.rollno);
@@ -234,6 +235,11 @@ char* replace_substr(char* template_string, const char* substr, const char* subs
         new_str_size += prefix_size + replacement_size + suffix_size;
 
         new_str = (char*)calloc(new_str_size, sizeof(char));
+        if (new_str == NULL)
+        {
+          fprintf(stderr, "Failed to allocate memory during template expansion\n");
+          exit(1);
+        }
 
         strncat(new_str, template_string, prefix_size);
         strncat(new_str, substr_replace, strlen(substr_replace));
